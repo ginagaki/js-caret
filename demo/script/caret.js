@@ -1,99 +1,84 @@
 var caret = {
     // create caret object
-    create          : create_caret,
+    create          : function (editorId) {caret.editornode = document.getElementById(editorId); },
     // selection class
     selectionId     : "caret-selection",
     // editor node
     editorNode      : "",
     // selectionStart
-    getStart        : function () { return get_caret_selectionSE('start'); },
+    Start           : function () { return caret_selectionSE('start'); },
     // selectionEnd
-    getEnd          : function () { return get_caret_selectionSE('end'); },
+    End             : function () { return caret_selectionSE('end'); },
     // before caret's start
-    getBefStCaret   : function () { return get_before_caret('start'); },
+    BeforeStart     : function () { return caret_beforeSE('start'); },
     // before caret's end
-    getBefEnCaret   : function () {return get_before_caret('end'); },
+    BeforeEnd       : function () { return caret_beforeSE('end'); },
     // caret position
-    position        : get_caret_position,
+    position        : caret_position,
     // caret range
-    range           : "",
-    // caret selection
-    selection       : "",
-    // caret selected node
     selectedNode    : "",
 };
 
-function create_caret (editorid) {
-    caret.editornode = document.getElementById(editorid);
-}
-
-function get_caret_selectionSE (se) {
+function caret_selectionSE (se) {
     if(caret.editornode.innerHTML || caret.editornode.textContent){
-        return remove_tags(getbeforecaret(se)).length;
+        return caret_removetag(caret_beforeSE(se)).length;
     }
 }
 
-function get_before_caret (se){
-    caret.range = getSelection().getRangeAt(0);
-    
-    var container = caret.range[se + "Container"];
-    var offset = caret.range[se + "Offset"]
+function caret_beforeSE (se) {
+    var range = getSelection().getRangeAt(0);
+    var container = range[se + "Container"];
+    var offset = range[se + "Offset"]
     var from = caret.editornode.childNodes[0];
-    
-    var resultHTML = get_innerHtml_fromto(from, container) + container.textContent.substring(0, offset);
-    
-    return remove_tags(resultHTML);
+    var resultHTML = caret_FromTo(from, container) + container.textContent.substring(0, offset);
+    return caret_removetag(resultHTML);
 }
 
-function get_caret_position () {
+function caret_position () {
+    var range;
     try{
-        if (!set_select_area()) { return false };
-
-        return {
-            left    : caret.selectedNode.getBoundingClientRect().left + window.pageXOffset,
-            top     : caret.selectedNode.getBoundingClientRect().top  + window.pageYOffset
-        }
+        range = caret_setsel();
+        var BCR = caret.selectedNode.getBoundingClientRect()
+        return range ? {
+            left    : BCR.left + window.pageXOffset,
+            top     : BCR.top  + window.pageYOffset
+        } : null;
     }finally{
-        dispose_select_area();
+        caret_dispose(range);
     }
 }
 
-function set_select_area(){
-    caret.selection = getSelection();
-    if(!caret.selection.isCollapsed){ return false; }
-
+function caret_setsel () {
+    var sel = getSelection();
+    if(!sel.isCollapsed){ return false; }
     var span = document.createElement('span');
     span.setAttribute('id', caret.selectionId);
-    
-    caret.range = caret.selection.getRangeAt(0);
-    caret.range.surroundContents(span);
+    var range = sel.getRangeAt(0);
+    range.surroundContents(span);
     caret.selectedNode = document.getElementById(caret.selectionId);
-    
-    return true;
+    return range;
 }
 
-function dispose_select_area(){
-    caret.range.detach();
+function caret_dispose (range) {
+    range.detach();
     var pnode = caret.selectedNode.parentNode;
     pnode && pnode.removeChild(caret.selectedNode);
 }
 
-function remove_tags(txt){
+function caret_removetag (txt) {
     return txt.replace(/<(\/)?[^>]*>/g,'');
 }
 
-function get_innerHtml_fromto(from, to){
+function caret_FromTo (from, to) {
     var txt = '';
-    while(from && from != to){
-        if(from.textContent){
-           if(from.contains(to)){
-               txt = txt + from.outerHTML.match(/<[^>]*>/)[0];
-               from = from.childNodes[0];
-           } else {
-               txt = txt + from.textContent;
-               from = from.nextSibling;
-           }
-        }else{
+    var contains;
+    
+    while (from != to) {
+        if (from.textContent) {
+            contains = from.contains(to);
+            txt  = txt + (contains ? from.outerHTML.match(/<[^>]*>/)[0] : from.textContent);
+            from = contains ? from.childNodes[0] : from.nextSibling;
+        } else {
             from = from.nextSibling;
         }
     }
