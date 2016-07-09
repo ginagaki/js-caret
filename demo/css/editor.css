@@ -1,0 +1,13 @@
+#editor{
+    border  :   solid thin blue;
+    width   :   400px;
+    height  :   400px;
+    position:   absolute;
+    top     :   40px;
+    left    :   40px;
+}
+#autoComplete{
+    border  :   solid thin red;
+    width   :   40px;
+    height  :   50px;
+}
