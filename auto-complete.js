@@ -2,9 +2,8 @@ var autoComp = {
     create              :   autoComp_create,
     editorNode          :   "",
     autoCompNode        :   "",
-    setDefalts          :   autoComp_defaults,
-    setCustoms          :   autoComp_regist,
-    inputs              :   "",
+    editorCache         :   "",
+    words               :   ["aiueo","test","sansuu","manbou","document","getElementById","getTest","test2","Test","Sample"]
 }
 
 function autoComp_create(editorId, autoCompleteId){
@@ -15,26 +14,48 @@ function autoComp_create(editorId, autoCompleteId){
     autoComp.autoCompNode.style.position = 'absolute';
 }
 
-function autoComp_regist(instance){
-    
-}
-
-function autoComp_defaults(){
-    
-}
-
 function autocomp_update(e){
-    if(65 <= e.keyCode && e.keyCode <= 90 && !e.ctrlKey && !e.shiftKey){
-        autoComp.autoCompNode.style.display = 'inline';
-        autoComp_position(caret.position());
-    }else{
-        autoComp.autoCompNode.style.display = 'none';
+    var editortext = autoComp.editorNode.textContent;
+    if(autoComp.editorCache != editortext){
+        var currentText = autoComp_get_current_text(editortext, caret.Start());
+        
+        if(currentText){
+            if(e.keyCode === 32 || e.keyCode === 190 && !e.ctrlKey && !e.shiftKey & !e.altKey){
+                autoComp.autoCompNode.style.display = 'inline';
+                autoComp_position(caret.position());
+            }
+            autoComp.editorCache = autoComp.textContent;
+        }
     }
 }
 
 function autoComp_position(pos){
     if(!pos) return;
 
-    autoComp.autoCompNode.style.top = (pos.top + 12) + "px";
-    autoComp.autoCompNode.style.left = (pos.left + 12) + "px";
+    autoComp.autoCompNode.style.top = (pos.top) + "px";
+    autoComp.autoCompNode.style.left = (pos.left) + "px";
+}
+
+function autoComp_get_current_text(editortext, selstart){
+    var txt     = "";
+    var current = selstart;
+    var last    = editortext.length - 1;
+    var ch      = editortext.charAt(current);
+    
+    while(!ch.test(/[ .]/) || current != last){
+        txt = txt + ch;
+        current++;
+        ch = editortext.charAt(current);
+    }
+    
+    current = selstart - 1;
+    ch = editortext.charAt(current);
+    
+    while(!ch.test(/[ .]/) || current != -1){
+        txt = ch + txt;
+        current--;
+        ch = editortext.charAt(current);
+    }
+    
+    return txt;
 }
